@@ -1,0 +1,19 @@
+# Add the following prefix to all images built with docker-compose
+COMPOSE_PROJECT_NAME=website
+
+# Docker names
+WORDPRESS_SERVICE=website_wordpress
+REVERSE_PROXY_SERVICE=website_reverse_proxy
+DB_SERVICE=website_db
+DB_ADMIN=website_db_admin
+NETWORK_NAME=website_network
+
+# Ports
+HOST_HTTP_PORT=8000
+HOST_SQL_ADMIN_PORT=8080
+
+# Application workers (should be 2-4 per CPU core)
+WSGI_WORKERS=2
+
+# Database
+DB_NAME=website_db

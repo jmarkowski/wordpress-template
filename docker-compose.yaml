@@ -1,0 +1,76 @@
+version: '3.1'
+
+services:
+
+  wordpress:
+    image: wordpress:6.0.0-fpm-alpine
+    container_name: ${WORDPRESS_SERVICE}
+    restart: unless-stopped
+    environment:
+      - WORDPRESS_DB_HOST=db
+      - WORDPRESS_DB_NAME=${DB_NAME}
+      - WORDPRESS_DB_USER_FILE=/run/secrets/db_user
+      - WORDPRESS_DB_PASSWORD_FILE=/run/secrets/db_password
+    secrets:
+      - db_user
+      - db_password
+    volumes:
+      - './data/wordpress:/var/www/html'
+    depends_on:
+      - db
+
+  db:
+    # MariaDB 10.7 is the latest compatible database
+    # https://make.wordpress.org/hosting/handbook/compatibility/
+    image: mariadb:10.7
+    container_name: ${DB_SERVICE}
+    restart: always
+    environment:
+      - MYSQL_DATABASE=${DB_NAME}
+      - MYSQL_ROOT_PASSWORD_FILE=/run/secrets/db_root_password
+      - MYSQL_USER_FILE=/run/secrets/db_user
+      - MYSQL_PASSWORD_FILE=/run/secrets/db_password
+    secrets:
+      - db_root_password
+      - db_user
+      - db_password
+    volumes:
+      - './data/mariadb:/var/lib/mysql'
+
+  reverse_proxy:
+    image: nginx:1.22.0-alpine
+    container_name: ${REVERSE_PROXY_SERVICE}
+    restart: unless-stopped
+    ports:
+      - 8000:80
+    volumes:
+      - './data/wordpress:/var/www/html'
+      - './reverse-proxy/nginx.conf:/etc/nginx/nginx.conf:ro'
+    depends_on:
+      - wordpress
+
+  db_admin:
+    image: adminer:4.8.1
+    container_name: ${DB_ADMIN}
+    restart: always
+    environment:
+      # Avaialble designs: https://github.com/vrana/adminer/tree/master/designs
+      - ADMINER_DESIGN=nette
+      - ADMINER_DEFAULT_SERVER=db
+    ports:
+      - 8080:8080
+    depends_on:
+      - db
+
+networks:
+  default:
+    name: ${NETWORK_NAME}
+    driver: bridge
+
+secrets:
+  db_root_password:
+    file: ./secrets/db-root-password.txt
+  db_user:
+    file: ./secrets/db-user.txt
+  db_password:
+    file: ./secrets/db-password.txt

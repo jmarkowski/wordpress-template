@@ -1,0 +1,6 @@
+# Environments
+.env
+
+# Ignore private data
+data/*
+secrets/*
