@@ -101,6 +101,35 @@ RUN { \
 		echo 'html_errors = Off'; \
 	} > /usr/local/etc/php/conf.d/error-logging.ini
 
+# Install recommended PHP extensions
+# https://make.wordpress.org/hosting/handbook/handbook/server-environment/#php-extensions
+RUN set -ex; \
+    apt-get update; \
+	apt-get install -y --no-install-recommends \
+		libmcrypt-dev \
+		libssh2-1-dev \
+	; \
+	\
+	docker-php-ext-install -j "$(nproc)" \
+		gettext \
+		calendar \
+		sockets \
+	; \
+	pecl install mcrypt-1.0.5; \
+	pecl install ssh2-1.3.1; \
+	docker-php-ext-enable \
+		mcrypt \
+		ssh2 \
+	;
+
+# Install recommended system packages
+# https://make.wordpress.org/hosting/handbook/server-environment/#system-packages
+RUN set -ex; \
+	apt-get install -y --no-install-recommends \
+		imagemagick \
+	; \
+	rm -rf /var/lib/apt/lists/*;
+
 RUN set -eux; \
 	version='6.0'; \
 	sha1='7a5a6d0591771e730b05c49d0c3fc134624d0491'; \
