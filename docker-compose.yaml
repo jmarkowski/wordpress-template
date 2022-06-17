@@ -17,6 +17,7 @@ services:
       - db_password
     volumes:
       - './data/wordpress:/var/www/html'
+      - './php.ini-development:/usr/local/etc/php/conf.d/php.ini:ro'
     depends_on:
       - db
 
