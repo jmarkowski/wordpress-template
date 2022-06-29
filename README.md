@@ -74,9 +74,40 @@ command:
     $ docker container exec -ti <proj>_wordpress bash
 
 
+# Production
+
+If you're developing locally with `localhost:8000` as your browser URL,
+eventually you'll want to host the wordpress website on a production server
+for a given domain.
+
+When you're at this stage, you will need to update the `siteurl` and `home`
+fields in the `wp_options` table in the wordpress database (this is specified by
+the `DB_NAME` environment variable). You can make the database changes by
+accessing port `8080` of the launched instance.
+
+See [Changing the Site URL](https://wordpress.org/support/article/changing-the-site-url/)
+for other options.
+
+The `siteurl` constant points to the path of the WordPress installation. If the
+site is installed in `/wordpress`, then the `siteurl` should be set to
+`https://example.com/wordpress`.
+
+The `home` is the URL a visitor would enter into the browser to access the
+WordPress site. For example, although WordPress may be installed at `/wordpress`,
+perhaps the site is to be accessed from the root of `https://example.com`, in
+which case `home` should be set to this value.
+
+
 # Resources
 
 * [How to Install Wordpress with Docker Compose](https://www.digitalocean.com/community/tutorials/how-to-install-wordpress-with-docker-compose)
 * [Install Wordpress with Docker Compose, Nginx, Apache with SSL](https://www.cloudbooklet.com/install-wordpress-with-docker-compose-nginx-apache-with-ssl/)
 * [Understanding and Implementing FastCGI Proxying in Nginx](https://www.digitalocean.com/community/tutorials/understanding-and-implementing-fastcgi-proxying-in-nginx)
 * [Understanding Nginx Server and Location Block Selection Algorithms](https://www.digitalocean.com/community/tutorials/understanding-nginx-server-and-location-block-selection-algorithms)
+
+
+# Wish List
+
+- Allow the `siteurl` and `home` variables to be defined using docker
+  environment variables.
+  See https://wordpress.org/support/article/changing-the-site-url/#edit-wp-config-php
