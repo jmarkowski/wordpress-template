@@ -168,6 +168,21 @@ RUN set -eux; \
 	chown -R www-data:www-data wp-content; \
 	chmod -R 777 wp-content
 
+# Install WP-CLI
+# Add sudo in order to run wp-cli as the www-data user
+RUN apt-get update; \
+    apt-get install -y \
+        less \
+    ;
+
+ARG WP_CLI_VERSION=2.6.0
+RUN curl -o /tmp/wp-cli.phar -L https://github.com/wp-cli/wp-cli/releases/download/v${WP_CLI_VERSION}/wp-cli-${WP_CLI_VERSION}.phar;
+RUN chmod +x /tmp/wp-cli.phar && mv /tmp/wp-cli.phar /usr/local/bin/wp
+
+# Cleanup
+RUN apt-get clean; \
+    rm -rf /var/lib/apt/lists/* /tmp/* /var/tmp/*
+
 VOLUME /var/www/html
 
 COPY --chown=www-data:www-data wp-config-docker.php /usr/src/wordpress/
