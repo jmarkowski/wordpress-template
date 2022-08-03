@@ -1,6 +1,7 @@
 # Environments
 .env
 
-# Ignore private data
+# Ignore private data (except wordpress files)
 data/*
+!data/wordpress
 secrets/*
