@@ -8,6 +8,16 @@ DB_SERVICE=website_db
 DB_ADMIN=website_db_admin
 NETWORK_NAME=website_network
 
+# Running user
+# By default, wordpress would run as 'www-data:www-data' (33:33), but the
+# permissions of the tracked repository is the host user and group. So to run
+# wordpress without having to run a recursive 'chown -R 33:33 wordpress/', we
+# can simply run it as the user to make life easy.
+#
+# You can use these to match your user's UID ($ id -u) and GID ($ id -g).
+WORDPRESS_UID=1000
+WORDPRESS_GID=100
+
 # Ports
 HOST_HTTP_PORT=8000
 HOST_SQL_ADMIN_PORT=8080
