@@ -3,7 +3,7 @@ version: '3.1'
 services:
 
   wordpress:
-    image: ${COMPOSE_PROJECT_NAME}/wordpress-fpm:6.0.0
+    image: ${COMPOSE_PROJECT_NAME}/wordpress-fpm:6.9.1
     build: ./wordpress-fpm
     container_name: ${WORDPRESS_SERVICE}
     restart: unless-stopped
@@ -26,9 +26,9 @@ services:
       - db
 
   db:
-    # MariaDB 10.7 is the latest compatible database
+    # MariaDB 11.4 is the latest compatible database
     # https://make.wordpress.org/hosting/handbook/compatibility/
-    image: mariadb:10.7
+    image: mariadb:11.4
     container_name: ${DB_SERVICE}
     restart: always
     environment:
@@ -44,7 +44,7 @@ services:
       - './data/mariadb:/var/lib/mysql'
 
   reverse_proxy:
-    image: nginx:1.22.0-alpine
+    image: nginx:1.28.2-alpine
     container_name: ${REVERSE_PROXY_SERVICE}
     restart: unless-stopped
     ports:
@@ -56,7 +56,7 @@ services:
       - wordpress
 
   db_admin:
-    image: adminer:4.8.1
+    image: adminer:5.4.2
     container_name: ${DB_ADMIN}
     restart: always
     environment:

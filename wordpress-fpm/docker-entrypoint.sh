@@ -1,15 +1,14 @@
 #!/usr/bin/env bash
 
-# Based on https://github.com/docker-library/wordpress/tree/master/latest/php8.1/fpm
-# commit/0e3f192f9daab75f69b49aae8e69b3e23de33a02
+# Based on https://github.com/docker-library/wordpress/blob/master/latest/php8.4/fpm/docker-entrypoint.sh
 
 set -Eeuo pipefail
 
-if [[ "$1" == apache2* ]] || [ "$1" = 'php-fpm' ]; then
+if [[ "${1-}" == apache2* ]] || [ "${1-}" = 'php-fpm' ] || { self="$(basename "$0")" && [ "$self" = 'docker-ensure-installed.sh' ]; }; then
 	uid="$(id -u)"
 	gid="$(id -g)"
 	if [ "$uid" = '0' ]; then
-		case "$1" in
+		case "${1-}" in
 			apache2*)
 				user="${APACHE_RUN_USER:-www-data}"
 				group="${APACHE_RUN_GROUP:-www-data}"
