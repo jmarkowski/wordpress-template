@@ -44,7 +44,7 @@ services:
       - './data/mariadb:/var/lib/mysql'
 
   reverse_proxy:
-    image: nginx:1.22.0-alpine
+    image: nginx:1.28.2-alpine
     container_name: ${REVERSE_PROXY_SERVICE}
     restart: unless-stopped
     ports:
