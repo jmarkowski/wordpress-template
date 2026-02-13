@@ -1,8 +1,10 @@
 #
-# Based on https://github.com/docker-library/wordpress/tree/master/latest/php8.1/fpm
-# commit/0e3f192f9daab75f69b49aae8e69b3e23de33a02
+# Based on https://github.com/docker-library/wordpress/blob/master/latest/php8.4/fpm/Dockerfile
 #
-FROM php:8.1-fpm
+# PLEASE DO NOT EDIT IT DIRECTLY.
+#
+
+FROM php:8.4-fpm
 
 # persistent dependencies
 RUN set -eux; \
@@ -10,6 +12,10 @@ RUN set -eux; \
 	apt-get install -y --no-install-recommends \
 # Ghostscript is required for rendering PDF previews
 		ghostscript \
+# pull in AV1 & HEVC image encoding (and not just decoding)
+# https://github.com/docker-library/wordpress/issues/996
+		libheif-plugin-aomenc \
+		libheif-plugin-x265 \
 	; \
 	rm -rf /var/lib/apt/lists/*
 
@@ -20,6 +26,7 @@ RUN set -ex; \
 	\
 	apt-get update; \
 	apt-get install -y --no-install-recommends \
+		libavif-dev \
 		libfreetype6-dev \
 		libicu-dev \
 		libjpeg-dev \
@@ -30,6 +37,7 @@ RUN set -ex; \
 	; \
 	\
 	docker-php-ext-configure gd \
+		--with-avif \
 		--with-freetype \
 		--with-jpeg \
 		--with-webp \
@@ -42,9 +50,8 @@ RUN set -ex; \
 		mysqli \
 		zip \
 	; \
-
 # https://pecl.php.net/package/imagick
-	pecl install imagick-3.6.0; \
+	pecl install imagick-3.8.1; \
 	docker-php-ext-enable imagick; \
 	rm -r /tmp/pear; \
 	\
@@ -60,9 +67,9 @@ RUN set -ex; \
 	apt-mark auto '.*' > /dev/null; \
 	apt-mark manual $savedAptMark; \
 	ldd "$extDir"/*.so \
-		| awk '/=>/ { print $3 }' \
+		| awk '/=>/ { so = $(NF-1); if (index(so, "/usr/local/") == 1) { next }; gsub("^/(usr/)?", "", so); printf "*%s\n", so }' \
 		| sort -u \
-		| xargs -r dpkg-query -S \
+		| xargs -r dpkg-query --search \
 		| cut -d: -f1 \
 		| sort -u \
 		| xargs -rt apt-mark manual; \
@@ -77,17 +84,17 @@ RUN set -ex; \
 
 # set recommended PHP.ini settings
 # see https://secure.php.net/manual/en/opcache.installation.php
+# enabled by default in the php images: https://github.com/docker-library/php/pull/1587
 RUN set -eux; \
-	docker-php-ext-enable opcache; \
 	{ \
 		echo 'opcache.memory_consumption=128'; \
 		echo 'opcache.interned_strings_buffer=8'; \
 		echo 'opcache.max_accelerated_files=4000'; \
 		echo 'opcache.revalidate_freq=2'; \
-		echo 'opcache.fast_shutdown=1'; \
-	} > /usr/local/etc/php/conf.d/opcache-recommended.ini
+	} > "$PHP_INI_DIR/conf.d/opcache-recommended.ini"
 # https://wordpress.org/support/article/editing-wp-config-php/#configure-error-logging
-RUN { \
+RUN set -eux; \
+	{ \
 # https://www.php.net/manual/en/errorfunc.constants.php
 # https://github.com/docker-library/wordpress/issues/420#issuecomment-517839670
 		echo 'error_reporting = E_ERROR | E_WARNING | E_PARSE | E_CORE_ERROR | E_CORE_WARNING | E_COMPILE_ERROR | E_COMPILE_WARNING | E_RECOVERABLE_ERROR'; \
@@ -99,40 +106,11 @@ RUN { \
 		echo 'ignore_repeated_errors = On'; \
 		echo 'ignore_repeated_source = Off'; \
 		echo 'html_errors = Off'; \
-	} > /usr/local/etc/php/conf.d/error-logging.ini
-
-# Install recommended PHP extensions
-# https://make.wordpress.org/hosting/handbook/handbook/server-environment/#php-extensions
-RUN set -ex; \
-    apt-get update; \
-	apt-get install -y --no-install-recommends \
-		libmcrypt-dev \
-		libssh2-1-dev \
-	; \
-	\
-	docker-php-ext-install -j "$(nproc)" \
-		gettext \
-		calendar \
-		sockets \
-	; \
-	pecl install mcrypt-1.0.5; \
-	pecl install ssh2-1.3.1; \
-	docker-php-ext-enable \
-		mcrypt \
-		ssh2 \
-	;
-
-# Install recommended system packages
-# https://make.wordpress.org/hosting/handbook/server-environment/#system-packages
-RUN set -ex; \
-	apt-get install -y --no-install-recommends \
-		imagemagick \
-	; \
-	rm -rf /var/lib/apt/lists/*;
+	} > "$PHP_INI_DIR/conf.d/error-logging.ini"
 
 RUN set -eux; \
-	version='6.0'; \
-	sha1='7a5a6d0591771e730b05c49d0c3fc134624d0491'; \
+	version='6.9.1'; \
+	sha1='2914d37c00597e6216a88f90e22b1b4c7bbd09e8'; \
 	\
 	curl -o wordpress.tar.gz -fL "https://wordpress.org/wordpress-$version.tar.gz"; \
 	echo "$sha1 *wordpress.tar.gz" | sha1sum -c -; \
@@ -166,7 +144,7 @@ RUN set -eux; \
 		mkdir "wp-content/$dir"; \
 	done; \
 	chown -R www-data:www-data wp-content; \
-	chmod -R 777 wp-content
+	chmod -R 1777 wp-content
 
 # Install WP-CLI
 # Add sudo in order to run wp-cli as the www-data user
@@ -176,7 +154,7 @@ RUN apt-get update; \
         less \
     ;
 
-ARG WP_CLI_VERSION=2.6.0
+ARG WP_CLI_VERSION=2.12.0
 RUN curl -o /tmp/wp-cli.phar -L https://github.com/wp-cli/wp-cli/releases/download/v${WP_CLI_VERSION}/wp-cli-${WP_CLI_VERSION}.phar;
 RUN chmod +x /tmp/wp-cli.phar && mv /tmp/wp-cli.phar /usr/local/bin/wp
 
@@ -188,6 +166,8 @@ VOLUME /var/www/html
 
 COPY --chown=www-data:www-data wp-config-docker.php /usr/src/wordpress/
 COPY docker-entrypoint.sh /usr/local/bin/
+# https://github.com/docker-library/wordpress/issues/969
+RUN ln -svfT docker-entrypoint.sh /usr/local/bin/docker-ensure-installed.sh
 
 ENTRYPOINT ["docker-entrypoint.sh"]
 CMD ["php-fpm"]
