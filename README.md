@@ -7,6 +7,15 @@ wordpress, PHP-FPM is used to process PHP and MariaDB as the backend database.
 
 # Setup
 
+## Prerequisites
+
+### Docker Compose
+
+Download and install the latest `docker-compose` file (testing was done with
+`v5.0.1`)
+
+https://docs.docker.com/compose/install/linux/#install-the-plugin-manually
+
 ## Initialization
 
 The following commands will configure the template project with a custom project
@@ -65,6 +74,15 @@ browser:
 
 Refer to the information in the `.env` file and the secret username and password
 information stored in the `secrets/` directory.
+
+```
+System:     MySQL / MariaDB
+Server:     db
+Username:   (whatever is in `db-user.txt`)
+Password:   (whatever is in `db-password.txt`)
+Database:   (blank)
+```
+
 
 ## Launching Bash
 

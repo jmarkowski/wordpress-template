@@ -23,7 +23,7 @@ HOST_HTTP_PORT=8000
 HOST_SQL_ADMIN_PORT=8080
 
 # Application workers (should be 2-4 per CPU core)
-WSGI_WORKERS=2
+WSGI_WORKERS=1
 
 # Database
 DB_NAME=website_wp
